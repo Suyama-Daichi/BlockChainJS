@@ -8,13 +8,12 @@ class Block{
      * コンストラクタ
      * @param {number} index - 何番目のブロックかを表す
      * @param {string} timestamp - タイムスタンプ
-     * @param {object} data - ブロックに格納したい何らかのデータ
+     * @param {object} transactions - ブロックに格納したい何らかのデータ(トランザクション)
      * @param {string} previousHash - 前のブロックのハッシュ
      */
-    constructor(index, timestamp, data, previousHash = ''){
-        this.index = index;
+    constructor(timestamp, transactions, previousHash = ''){
         this.timestamp = timestamp;
-        this.data = data;
+        this.transactions = transactions;
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
         this.nonce = 0; // 追加
@@ -25,7 +24,7 @@ class Block{
      */
     calculateHash(){
         // nounceをHashの計算対象に追加
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce).toString();
+        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce).toString();
     }
 
     /**
@@ -57,7 +56,7 @@ class BlockChain{
      * ブロックチェーンの最初のブロックを作成する
      */
     createGenesisBlock(){
-        return new Block(0, "01/01/2019", "Genesis Block", "0");
+        return new Block("01/01/2019", "Genesis Block", "0");
     }
 
     /**
@@ -107,8 +106,3 @@ class BlockChain{
  * 実行
  */
 let suyamaCoin = new BlockChain();
-console.log('ブロックをマイニング…1');
-suyamaCoin.addBlock(new Block(1, "03/02/2019", {amount: 4}));
-
-console.log('ブロックをマイニング…2');
-suyamaCoin.addBlock(new Block(2, "03/05/2019", {amount: 10}));
