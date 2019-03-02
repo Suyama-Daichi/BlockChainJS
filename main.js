@@ -68,6 +68,6 @@ class BlockChain{
  */
 let suyamaCoin = new BlockChain();
 suyamaCoin.addBlock(new Block(1, "03/02/2019", {amount: 4}));
-suyamaCoin.addBlock(new Block(1, "03/05/2019", {amount: 10}));
+suyamaCoin.addBlock(new Block(2, "03/05/2019", {amount: 10}));
 
 console.log(JSON.stringify(suyamaCoin, null, 4));
