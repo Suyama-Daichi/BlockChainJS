@@ -1,6 +1,17 @@
 const SHA256 = require('crypto-js/sha256');
 
 /**
+ * トランザクション型を追加
+ */
+class Transaction{
+    constructor(fromAddress, toAddress, amount){
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
+        this.amount = amount;
+    }
+}
+
+/**
  * ブロックを生成するクラス
  */
 class Block{
@@ -16,14 +27,13 @@ class Block{
         this.transactions = transactions;
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
-        this.nonce = 0; // 追加
+        this.nonce = 0;
     }
 
     /**
      * ハッシュ値を算出
      */
     calculateHash(){
-        // nounceをHashの計算対象に追加
         return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce).toString();
     }
 
@@ -49,7 +59,9 @@ class BlockChain{
      */
     constructor(){
         this.chain = [this.createGenesisBlock()];
-        this.dificulty = 2; // これを増やすとマシンパワーが必要になる
+        this.dificulty = 2;
+        this.pendingTransactions = []; // 追加
+        this.miningReward = 100; // 追加(=マイニング報酬)
     }
 
     /**
@@ -67,13 +79,47 @@ class BlockChain{
     }
 
     /**
-     * ブロックをブロックチェーンに追加する
-     * @param {object} newBlock - 新たに追加したいブロックのオブジェクト
+     * ブロックチェーンに追加待ちのトランザクションをマイニングしてブロックチェーンに追加する
+     * @param {string} miningRewardAddress - マイニングした人のアドレス
      */
-    addBlock(newBlock){
-        newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.mineBlock(this.dificulty);
-        this.chain.push(newBlock);
+    minePendingTransactions(miningRewardAddress){
+        let block = new Block(Date.now(), this.pendingTransactions)
+        block.mineBlock(this.dificulty);
+
+        console.log("マイニング成功！");
+        this.chain.push(block)
+        /**
+         * 保留中のトランザクションにマイニングした人に報酬を与えるトランザクションを作成
+         */
+        this.pendingTransactions = [
+            new Transaction(null, miningRewardAddress, this.miningReward)
+        ];
+    }
+
+    /**
+     * ブロックチェーンに追加待ちのトランザクションを追加する
+     * @param {Transaction} transaction - 追加したいトランザクションオブジェクト
+     */
+    createTransaction(transaction){
+        this.pendingTransactions.push(transaction);
+    }
+
+    getBalanceOfAddress(address){
+        let balance = 0;
+
+        for (const block of this.chain) {
+            for (const trans of block.transactions) {
+                // 送金する側は残高を減らす
+                if(trans.fromAddress === address){
+                    balance -= trans.amount;
+                }
+                // 受け取る側は、残高を増やす
+                if(trans.toAddress === address){
+                    balance += trans.amount;
+                }
+            }
+        }
+        return balance;
     }
 
     /**
@@ -106,3 +152,18 @@ class BlockChain{
  * 実行
  */
 let suyamaCoin = new BlockChain();
+
+// ブロックチェーンに追加待ちのトランザクションを作成
+suyamaCoin.createTransaction(new Transaction("address1", "address2", 100)); // address1からaddress2に100コイン送る
+suyamaCoin.createTransaction(new Transaction("address2", "address", 70)); // 50コインのおつりを返す
+
+// ブロックチェーンに追加待ちのトランザクションをマイニング！
+console.log('\n マイニング開始');
+suyamaCoin.minePendingTransactions('suyama\'s address');
+
+console.log('\n Suyamaの残高は', suyamaCoin.getBalanceOfAddress('suyama\'s address'));
+
+// ブロックチェーンに追加待ちのトランザクションをマイニング！
+console.log('\n 再度マイニング開始');
+suyamaCoin.minePendingTransactions('suyama\'s address');
+console.log('\n Suyamaの残高は', suyamaCoin.getBalanceOfAddress('suyama\'s address'));
