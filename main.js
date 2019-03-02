@@ -61,6 +61,31 @@ class BlockChain{
         newBlock.hash = newBlock.calculateHash();
         this.chain.push(newBlock);
     }
+
+    /**
+     * ブロックの正当性を評価
+     */
+    isChainValid(){
+        for (let i = 1; i < this.chain.length; i++) {
+            const currentBlock = this.chain[i];
+            const previousBlock = this.chain[i - 1]; // 一つ前のブロックを取得
+            
+            /**
+             * ブロックのハッシュが改ざんされていないか、ハッシュを再算出して計算して確認
+             */
+            if(currentBlock.hash !== currentBlock.calculateHash()){
+                return false;
+            }
+            
+            /**
+             * 前のブロックのハッシュと同一か確認
+             */
+            if(currentBlock.previousHash !== previousBlock.hash){
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 /**
@@ -68,6 +93,13 @@ class BlockChain{
  */
 let suyamaCoin = new BlockChain();
 suyamaCoin.addBlock(new Block(1, "03/02/2019", {amount: 4}));
-suyamaCoin.addBlock(new Block(1, "03/05/2019", {amount: 10}));
+suyamaCoin.addBlock(new Block(2, "03/05/2019", {amount: 10}));
 
+/**
+ * 改ざんしてみる(= ブロックチェーンの整合性が取れなくなる)
+ */
+suyamaCoin.chain[1].data = {amount: 40};
+suyamaCoin.chain[1].hash = suyamaCoin.chain[1].calculateHash();
+
+console.log('ブロックチェーンは有効？' + suyamaCoin.isChainValid());
 console.log(JSON.stringify(suyamaCoin, null, 4));
