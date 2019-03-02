@@ -97,6 +97,7 @@ suyamaCoin.addBlock(new Block(2, "03/05/2019", {amount: 10}));
 
 /**
  * 改ざんしてみる(= ブロックチェーンの整合性が取れなくなる)
+ * 正常にするには下の2行をコメントアウト
  */
 suyamaCoin.chain[1].data = {amount: 40};
 suyamaCoin.chain[1].hash = suyamaCoin.chain[1].calculateHash();
