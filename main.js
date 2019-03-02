@@ -17,13 +17,27 @@ class Block{
         this.data = data;
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
+        this.nonce = 0; // 追加
     }
 
     /**
      * ハッシュ値を算出
      */
     calculateHash(){
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data)).toString();
+        // nounceをHashの計算対象に追加
+        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce).toString();
+    }
+
+    /**
+     * マイニングして、ブロックチェーンに入れられるようにする
+     * @param {number} dificulty - マイニングの難易度
+     */
+    mineBlock(dificulty){
+        while(this.hash.substring(0, dificulty) !== Array(dificulty + 1).join("0")){
+            this.nonce++;
+            this.hash = this.calculateHash();
+        }
+        console.log("ブロックがマイニングされました。ハッシュ値は" + this.hash + "です");
     }
 }
 
@@ -36,6 +50,7 @@ class BlockChain{
      */
     constructor(){
         this.chain = [this.createGenesisBlock()];
+        this.dificulty = 2; // これを増やすとマシンパワーが必要になる
     }
 
     /**
@@ -58,7 +73,7 @@ class BlockChain{
      */
     addBlock(newBlock){
         newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.dificulty);
         this.chain.push(newBlock);
     }
 
@@ -92,15 +107,8 @@ class BlockChain{
  * 実行
  */
 let suyamaCoin = new BlockChain();
+console.log('ブロックをマイニング…1');
 suyamaCoin.addBlock(new Block(1, "03/02/2019", {amount: 4}));
+
+console.log('ブロックをマイニング…2');
 suyamaCoin.addBlock(new Block(2, "03/05/2019", {amount: 10}));
-
-/**
- * 改ざんしてみる(= ブロックチェーンの整合性が取れなくなる)
- * 正常にするには下の2行をコメントアウト
- */
-suyamaCoin.chain[1].data = {amount: 40};
-suyamaCoin.chain[1].hash = suyamaCoin.chain[1].calculateHash();
-
-console.log('ブロックチェーンは有効？' + suyamaCoin.isChainValid());
-console.log(JSON.stringify(suyamaCoin, null, 4));
