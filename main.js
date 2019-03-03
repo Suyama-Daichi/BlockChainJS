@@ -17,7 +17,6 @@ class Transaction{
 class Block{
     /**
      * コンストラクタ
-     * @param {number} index - 何番目のブロックかを表す
      * @param {string} timestamp - タイムスタンプ
      * @param {object} transactions - ブロックに格納したい何らかのデータ(トランザクション)
      * @param {string} previousHash - 前のブロックのハッシュ
@@ -34,7 +33,7 @@ class Block{
      * ハッシュ値を算出
      */
     calculateHash(){
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce).toString();
+        return SHA256(this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce).toString();
     }
 
     /**
