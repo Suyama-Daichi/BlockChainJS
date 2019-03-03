@@ -155,7 +155,7 @@ let suyamaCoin = new BlockChain();
 
 // ブロックチェーンに追加待ちのトランザクションを作成
 suyamaCoin.createTransaction(new Transaction("address1", "address2", 100)); // address1からaddress2に100コイン送る
-suyamaCoin.createTransaction(new Transaction("address2", "address", 70)); // 50コインのおつりを返す
+suyamaCoin.createTransaction(new Transaction("address2", "address", 30)); // 30コインのおつりを返す
 
 // ブロックチェーンに追加待ちのトランザクションをマイニング！
 console.log('\n マイニング開始');
