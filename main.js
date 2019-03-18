@@ -91,4 +91,11 @@ let suyamaCoin = new BlockChain();
 suyamaCoin.addBlock(new Block(1, "03/02/2019", { amount: 5 }));
 suyamaCoin.addBlock(new Block(2, "03/05/2019", { amount: 10 }));
 
+/** 改ざん前 */
+console.log('Blockchain valid? ' + suyamaCoin.isChainValid());
+
+// 送金額を100に改ざん
+suyamaCoin.chain[1].data = { amount: 100 };
+
+/** 改ざん後 */
 console.log('Blockchain valid? ' + suyamaCoin.isChainValid());
