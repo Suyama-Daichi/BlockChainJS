@@ -3,7 +3,7 @@ const SHA256 = require('crypto-js/sha256');
 /**
  * ブロックを生成するクラス
  */
-class Block{
+class Block {
     /**
      * コンストラクタ
      * @param {number} index - 何番目のブロックかを表す
@@ -11,7 +11,7 @@ class Block{
      * @param {object} data - ブロックに格納したい何らかのデータ
      * @param {string} previousHash - 前のブロックのハッシュ
      */
-    constructor(index, timestamp, data, previousHash = ''){
+    constructor(index, timestamp, data, previousHash = '') {
         this.index = index;
         this.timestamp = timestamp;
         this.data = data;
@@ -22,7 +22,7 @@ class Block{
     /**
      * ハッシュ値を算出
      */
-    calculateHash(){
+    calculateHash() {
         return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data)).toString();
     }
 }
@@ -30,33 +30,33 @@ class Block{
 /**
  * ブロックを配列に格納し、"ブロックチェーン"を作るクラス
  */
-class BlockChain{
+class BlockChain {
     /**
      * コンストラクタ
      */
-    constructor(){
+    constructor() {
         this.chain = [this.createGenesisBlock()];
     }
 
     /**
      * ブロックチェーンの最初のブロックを作成する
      */
-    createGenesisBlock(){
+    createGenesisBlock() {
         return new Block(0, "01/01/2019", "Genesis Block", "0");
     }
 
     /**
      * 最新のブロック(一つ前のブロック)を取得する
      */
-    getLatestBlock(){
-        return this.chain[this.chain.length -1];
+    getLatestBlock() {
+        return this.chain[this.chain.length - 1];
     }
 
     /**
      * ブロックをブロックチェーンに追加する
      * @param {object} newBlock - 新たに追加したいブロックのオブジェクト
      */
-    addBlock(newBlock){
+    addBlock(newBlock) {
         newBlock.previousHash = this.getLatestBlock().hash;
         newBlock.hash = newBlock.calculateHash();
         this.chain.push(newBlock);
@@ -67,7 +67,7 @@ class BlockChain{
  * 実行
  */
 let suyamaCoin = new BlockChain();
-suyamaCoin.addBlock(new Block(1, "03/02/2019", {amount: 4}));
-suyamaCoin.addBlock(new Block(2, "03/05/2019", {amount: 10}));
+suyamaCoin.addBlock(new Block(1, "03/02/2019", { amount: 4 }));
+suyamaCoin.addBlock(new Block(2, "03/05/2019", { amount: 10 }));
 
 console.log(JSON.stringify(suyamaCoin, null, 4));
