@@ -13,9 +13,9 @@ class Block {
      */
     constructor(index, timestamp, data, previousHash = '') {
         this.index = index;
+        this.previousHash = previousHash;
         this.timestamp = timestamp;
         this.data = data;
-        this.previousHash = previousHash;
         this.hash = this.calculateHash();
     }
 
@@ -60,6 +60,27 @@ class BlockChain {
         newBlock.previousHash = this.getLatestBlock().hash;
         newBlock.hash = newBlock.calculateHash();
         this.chain.push(newBlock);
+    }
+
+    /** 
+     * チェーンの妥当性があるかをチェック
+     */
+    isChainValid() {
+        for (let i = 1; i < this.addBlock.chain.length; i++) {
+            const currentBlock = this.chain[i];
+            const previousBlock = this.chain[i - 1];
+
+            /** hashのみ改ざんされていたらfalseを返す */
+            if(currentBlock.hash !== currentBlock.calculateHash()) {
+                return false;
+            }
+
+            /** 前後のハッシュ値を比較して、何かしらが改ざんされていたらfalseを返す */
+            if(currentBlock.previousHash !== previousBlock.hash) {
+                return false;
+            } 
+        }
+        return true;
     }
 }
 
