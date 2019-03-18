@@ -10,6 +10,7 @@ class Block {
      * @param {string} timestamp - タイムスタンプ
      * @param {object} data - ブロックに格納したい何らかのデータ
      * @param {string} previousHash - 前のブロックのハッシュ
+     * @param {number} nonce - ナンス
      */
     constructor(index, timestamp, data, previousHash = '') {
         this.index = index;
@@ -17,13 +18,27 @@ class Block {
         this.timestamp = timestamp;
         this.data = data;
         this.hash = this.calculateHash();
+        this.nonce = 0;
+    }
+
+    mineBlock(difficulty) {
+        while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join('0')) {
+            this.nonce++;
+            this.hash = this.calculateHash();
+        }
+        console.log("BLOCK MINED: " + this.hash);
     }
 
     /**
      * ハッシュ値を算出
      */
     calculateHash() {
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data)).toString();
+        return SHA256(this.index +
+            this.previousHash +
+            this.timestamp +
+            JSON.stringify(this.data) +
+            this.nonce
+        ).toString();
     }
 }
 
@@ -36,6 +51,7 @@ class BlockChain {
      */
     constructor() {
         this.chain = [this.createGenesisBlock()];
+        this.difficulty = 2;
     }
 
     /**
@@ -58,7 +74,7 @@ class BlockChain {
      */
     addBlock(newBlock) {
         newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.difficulty);
         this.chain.push(newBlock);
     }
 
@@ -71,14 +87,14 @@ class BlockChain {
             const previousBlock = this.chain[i - 1];
 
             /** hashのみ改ざんされていたらfalseを返す */
-            if(currentBlock.hash !== currentBlock.calculateHash()) {
+            if (currentBlock.hash !== currentBlock.calculateHash()) {
                 return false;
             }
 
             /** 前後のハッシュ値を比較して、何かしらが改ざんされていたらfalseを返す */
-            if(currentBlock.previousHash !== previousBlock.hash) {
+            if (currentBlock.previousHash !== previousBlock.hash) {
                 return false;
-            } 
+            }
         }
         return true;
     }
@@ -88,14 +104,7 @@ class BlockChain {
  * 実行
  */
 let suyamaCoin = new BlockChain();
+console.log('Mining block 1');
 suyamaCoin.addBlock(new Block(1, "03/02/2019", { amount: 5 }));
+console.log('Mining block 2');
 suyamaCoin.addBlock(new Block(2, "03/05/2019", { amount: 10 }));
-
-/** 改ざん前 */
-console.log('Blockchain valid? ' + suyamaCoin.isChainValid());
-
-// 送金額を100に改ざん
-suyamaCoin.chain[1].data = { amount: 100 };
-
-/** 改ざん後 */
-console.log('Blockchain valid? ' + suyamaCoin.isChainValid());
