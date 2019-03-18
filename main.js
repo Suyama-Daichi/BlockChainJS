@@ -66,7 +66,7 @@ class BlockChain {
      * チェーンの妥当性があるかをチェック
      */
     isChainValid() {
-        for (let i = 1; i < this.addBlock.chain.length; i++) {
+        for (let i = 1; i < this.chain.length; i++) {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
 
@@ -88,7 +88,7 @@ class BlockChain {
  * 実行
  */
 let suyamaCoin = new BlockChain();
-suyamaCoin.addBlock(new Block(1, "03/02/2019", { amount: 4 }));
+suyamaCoin.addBlock(new Block(1, "03/02/2019", { amount: 5 }));
 suyamaCoin.addBlock(new Block(2, "03/05/2019", { amount: 10 }));
 
-console.log(JSON.stringify(suyamaCoin, null, 4));
+console.log('Blockchain valid? ' + suyamaCoin.isChainValid());
