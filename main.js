@@ -6,17 +6,14 @@ const SHA256 = require('crypto-js/sha256');
 class Block {
     /**
      * コンストラクタ
-     * @param {number} index - 何番目のブロックかを表す
      * @param {string} timestamp - タイムスタンプ
-     * @param {object} data - ブロックに格納したい何らかのデータ
      * @param {string} previousHash - 前のブロックのハッシュ
      * @param {number} nonce - ナンス
      */
-    constructor(index, timestamp, data, previousHash = '') {
-        this.index = index;
+    constructor(timestamp, transactions, previousHash = '') {
         this.previousHash = previousHash;
         this.timestamp = timestamp;
-        this.data = data;
+        this.transactions = transactions;
         this.hash = this.calculateHash();
         this.nonce = 0;
     }
@@ -33,12 +30,20 @@ class Block {
      * ハッシュ値を算出
      */
     calculateHash() {
-        return SHA256(this.index +
+        return SHA256(
             this.previousHash +
             this.timestamp +
-            JSON.stringify(this.data) +
+            JSON.stringify(this.transactions) +
             this.nonce
         ).toString();
+    }
+}
+
+class Transaction {
+    constructor(fromAddress, toAddress, amount) {
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
+        this.amount = amount;
     }
 }
 
@@ -51,7 +56,11 @@ class BlockChain {
      */
     constructor() {
         this.chain = [this.createGenesisBlock()];
-        this.difficulty = 2;
+        this.difficulty = 5;
+
+        this.pendingTransactions = [];
+
+        this.miningReward = 100;
     }
 
     /**
@@ -72,10 +81,25 @@ class BlockChain {
      * ブロックをブロックチェーンに追加する
      * @param {object} newBlock - 新たに追加したいブロックのオブジェクト
      */
-    addBlock(newBlock) {
-        newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.mineBlock(this.difficulty);
-        this.chain.push(newBlock);
+    createTransaction(transaction) {
+        this.pendingTransactions.push(transaction);
+    }
+
+    /** マイニング待ち(ブロックに追加される前)のトランザクションをマイニングする */
+    minePendingTransactions(miningRewardAddress) {
+        /** ブロックを生成 */
+        let block = new Block(Date.now(), this.pendingTransactions);
+
+        /** マイニング */
+        block.mineBlock(this.difficulty);
+
+        /** マイニングしたブロックをチェーンに追加 */
+        this.chain.push(block);
+
+        /** マイナーに報酬を支払うトランザクションをマイニング待ちに作成 */
+        this.pendingTransactions = [
+            new Transaction(null, miningRewardAddress, this.miningReward)
+        ];
     }
 
     /** 
@@ -98,13 +122,47 @@ class BlockChain {
         }
         return true;
     }
+
+    /** 残高を取得 */
+    getBalanceOfAddress(address) {
+        let balance = 0;
+
+        for (const block of this.chain) {
+            /** ブロックに格納されているトランザクションの配列の中をチェック */
+            for (const tran of block.transactions) {
+                /** トランザクションのfromAddress(送金者)が確認したい残高のアドレスと一致したらそのトランザクションのamount分を引く */
+                if (tran.fromAddress == address) {
+                    balance -= tran.amount;
+                }
+                /** トランザクションのtoAddress(受け取るアドレス)が確認したい残高のアドレスと一致したらそのトランザクションのamount分を足す */
+                if (tran.toAddress === address) {
+                    balance += tran.amount;
+                }
+            }
+        }
+        return balance;
+    }
+
 }
 
 /**
  * 実行
  */
 let suyamaCoin = new BlockChain();
-console.log('Mining block 1');
-suyamaCoin.addBlock(new Block(1, "03/02/2019", { amount: 5 }));
-console.log('Mining block 2');
-suyamaCoin.addBlock(new Block(2, "03/05/2019", { amount: 10 }));
+
+console.log('Creating some transactions...');
+// トランザクションの作成
+suyamaCoin.createTransaction(new Transaction('address1', 'address2', 100));
+suyamaCoin.createTransaction(new Transaction('address2', 'address1', 50));
+
+console.log('Starting the miner...');
+// 上記で作成したトランザクションをマイニング
+suyamaCoin.minePendingTransactions('xaviers-address');
+
+console.log('Balance of Xaviers address is', suyamaCoin.getBalanceOfAddress('xaviers-address'));
+
+/** マイニング報酬分は保留トランザクションに入ったままなので、再度マイニングする */
+console.log('Starting the miner again!');
+suyamaCoin.minePendingTransactions("xaviers-address");
+
+console.log('Balance of Xaviers address is', suyamaCoin.getBalanceOfAddress('xaviers-address'));
