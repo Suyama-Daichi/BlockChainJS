@@ -37,6 +37,16 @@ class Block {
             this.nonce
         ).toString();
     }
+
+    /** ブロック内のトランザクションがすべて有効かチェック */
+    hasValidTransactions() {
+        for (const tx of this.transactions) {
+            if (!tx.isValid()) {
+                return false;
+            }
+        }
+        return true
+    }
 }
 
 class Transaction {
@@ -45,6 +55,42 @@ class Transaction {
         this.toAddress = toAddress;
         this.amount = amount;
     }
+
+    /** トランザクションのオブジェクト一つ一つに署名するのではなく、トランザクションのハッシュに署名する */
+    calculateHash() {
+        return SHA256(this.fromAddress + this.toAddress + this.amount).toString();
+    }
+
+    signTransaction(signingKey) {
+        /** 他人のトランザクションには署名できない */
+        if (signingKey.getPublic('hex') !== this.fromAddress) {
+            throw new Error('You cannot sign transactions for other wallets!');
+        }
+
+        /** トランザクションのハッシュ値を計算 */
+        const hashTx = this.calculateHash();
+        /** トランザクションのハッシュに対してbase64で署名を行う */
+        const sig = signingKey.sign(hashTx, 'base64');
+        /** DER形式にエンコード。配列 */
+        this.signature = sig.toDER('hex');
+    }
+
+    isValid() {
+        /** fromAddressがnullになるのはマイニング報酬のトランザクション */
+        if (this.fromAddress === null) return true;
+
+        /** トランザクションに署名が行われているかチェック */
+        if (!this.signature || this.signature.length === 0) {
+            throw new Error('No signature in this transaction')
+        }
+
+        /** アドレスから公開鍵を取得 */
+        const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
+
+        /** 取得した公開鍵を使って、署名が有効かどうかをチェックする */
+        return publicKey.verify(this.calculateHash(), this.signature);
+    }
+
 }
 
 /**
